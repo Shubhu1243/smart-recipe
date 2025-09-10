@@ -2,7 +2,7 @@
 
 class RecipeGenerator {
     constructor() {
-        this.apiBaseUrl = 'https://smart-recipe-backend.vercel.app'; // Set backend URL
+        this.apiBaseUrl = 'https://smart-recipe-backend.vercel.app';
         this.ingredients = [];
         this.selectedEquipment = [];
         this.init();
@@ -15,31 +15,42 @@ class RecipeGenerator {
     }
 
     bindEvents() {
-        document.getElementById('recipeForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.generateRecipe();
-        });
-
-        document.getElementById('addIngredient').addEventListener('click', () => {
-            this.addIngredient();
-        });
-
-        document.getElementById('ingredientInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
+        const form = document.getElementById('recipeForm');
+        if (form) {
+            form.addEventListener('submit', (e) => {
                 e.preventDefault();
+                this.generateRecipe();
+            });
+        }
+
+        const addBtn = document.getElementById('addIngredient');
+        if (addBtn) {
+            addBtn.addEventListener('click', () => {
                 this.addIngredient();
-            }
-        });
+            });
+        }
+
+        const input = document.getElementById('ingredientInput');
+        if (input) {
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.addIngredient();
+                }
+            });
+        }
     }
 
     setupIngredientInput() {
         const input = document.getElementById('ingredientInput');
-        input.focus();
-        input.addEventListener('focus', function() {
-            if (this.value === this.placeholder) {
-                this.value = '';
-            }
-        });
+        if (input) {
+            input.focus();
+            input.addEventListener('focus', function() {
+                if (this.value === this.placeholder) {
+                    this.value = '';
+                }
+            });
+        }
     }
 
     async loadDropdownOptions() {
@@ -58,22 +69,26 @@ class RecipeGenerator {
 
         } catch (error) {
             console.error('Error loading dropdown options:', error);
-            this.showError('Failed to load options. Please refresh the page.');
+            this.showError('Failed to load dropdown options. Please refresh.');
         }
     }
 
     populateSelect(selectId, options) {
         const select = document.getElementById(selectId);
+        if (!select) return;
+        select.innerHTML = '<option value="">Select...</option>';
         options.forEach(option => {
-            const optionElement = document.createElement('option');
-            optionElement.value = option;
-            optionElement.textContent = option;
-            select.appendChild(optionElement);
+            const opt = document.createElement('option');
+            opt.value = option;
+            opt.textContent = option;
+            select.appendChild(opt);
         });
     }
 
     populateEquipmentGrid(equipmentList) {
         const grid = document.getElementById('equipmentGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
         equipmentList.forEach(equipment => {
             const item = document.createElement('div');
             item.className = 'equipment-item';
@@ -111,6 +126,7 @@ class RecipeGenerator {
 
     addIngredient() {
         const input = document.getElementById('ingredientInput');
+        if (!input) return;
         const ingredient = input.value.trim();
         if (ingredient && !this.ingredients.includes(ingredient)) {
             this.ingredients.push(ingredient);
@@ -127,6 +143,7 @@ class RecipeGenerator {
 
     updateIngredientsDisplay() {
         const container = document.getElementById('ingredientsList');
+        if (!container) return;
         container.innerHTML = '';
         this.ingredients.forEach(ingredient => {
             const tag = document.createElement('div');
@@ -134,7 +151,7 @@ class RecipeGenerator {
             tag.innerHTML = `
                 <span>${ingredient}</span>
                 <button type="button" class="remove-ingredient" onclick="recipeGenerator.removeIngredient('${ingredient}')">
-                    <i class="fas fa-times"></i>
+                    &times;
                 </button>
             `;
             container.appendChild(tag);
@@ -144,12 +161,12 @@ class RecipeGenerator {
     collectFormData() {
         return {
             ingredients: this.ingredients,
-            cookingTime: parseInt(document.getElementById('cookingTime').value),
-            servings: parseInt(document.getElementById('servings').value),
-            difficulty: document.getElementById('difficulty').value,
-            cuisine: document.getElementById('cuisine').value,
-            mealType: document.getElementById('mealType').value,
-            dietaryRestrictions: document.getElementById('dietaryRestrictions').value,
+            cookingTime: parseInt(document.getElementById('cookingTime')?.value || '0'),
+            servings: parseInt(document.getElementById('servings')?.value || '0'),
+            difficulty: document.getElementById('difficulty')?.value || '',
+            cuisine: document.getElementById('cuisine')?.value || '',
+            mealType: document.getElementById('mealType')?.value || '',
+            dietaryRestrictions: document.getElementById('dietaryRestrictions')?.value || '',
             equipment: this.selectedEquipment
         };
     }
@@ -157,22 +174,22 @@ class RecipeGenerator {
     validateForm(data) {
         const errors = [];
         if (data.ingredients.length === 0) {
-            errors.push('Please add at least one ingredient');
+            errors.push('Please add at least one ingredient.');
         }
         if (data.cookingTime < 5 || data.cookingTime > 480) {
-            errors.push('Cooking time must be between 5 and 480 minutes');
+            errors.push('Cooking time must be between 5 and 480 minutes.');
         }
         if (data.servings < 1 || data.servings > 20) {
-            errors.push('Servings must be between 1 and 20');
+            errors.push('Servings must be between 1 and 20.');
         }
         return errors;
     }
 
     async generateRecipe() {
         const formData = this.collectFormData();
-        const validationErrors = this.validateForm(formData);
-        if (validationErrors.length > 0) {
-            this.showError(validationErrors.join('. '));
+        const errors = this.validateForm(formData);
+        if (errors.length > 0) {
+            this.showError(errors.join(' '));
             return;
         }
         this.setLoadingState(true);
@@ -187,11 +204,11 @@ class RecipeGenerator {
                 this.displayRecipe(response.data);
                 this.scrollToRecipe();
             } else {
-                throw new Error(response.error || 'Failed to generate recipe');
+                throw new Error(response.error || 'Recipe generation failed.');
             }
         } catch (error) {
-            console.error('Recipe generation error:', error);
-            this.showError(error.message || 'Failed to generate recipe. Please try again.');
+            console.error('Error:', error);
+            this.showError(error.message || 'Error generating recipe.');
         } finally {
             this.setLoadingState(false);
         }
@@ -209,11 +226,11 @@ class RecipeGenerator {
 
     setLoadingState(loading) {
         const button = document.getElementById('generateBtn');
+        if (!button) return;
+        button.disabled = loading;
         if (loading) {
-            button.disabled = true;
             button.classList.add('loading');
         } else {
-            button.disabled = false;
             button.classList.remove('loading');
         }
     }
@@ -221,14 +238,12 @@ class RecipeGenerator {
     displayRecipe(recipe) {
         document.querySelector('.form-container').style.display = 'none';
         document.getElementById('recipeResult').classList.remove('hidden');
-
         document.getElementById('recipeTitle').textContent = recipe.title || 'Generated Recipe';
         document.getElementById('recipeDescription').textContent = recipe.description || '';
-        document.getElementById('recipeTotalTime').textContent = `${recipe.totalTime || recipe.cookTime} min`;
-        document.getElementById('recipeServings').textContent = `${recipe.servings} servings`;
+        document.getElementById('recipeTotalTime').textContent = `${recipe.totalTime || recipe.cookTime || 'N/A'} min`;
+        document.getElementById('recipeServings').textContent = `${recipe.servings || 'N/A'} servings`;
         document.getElementById('recipeDifficulty').textContent = recipe.difficulty || 'Medium';
         document.getElementById('recipeCuisine').textContent = recipe.cuisine || 'Mixed';
-
         this.displayIngredients(recipe.ingredients || []);
         this.displayEquipment(recipe.equipment || []);
         this.displayInstructions(recipe.instructions || []);
@@ -240,6 +255,7 @@ class RecipeGenerator {
 
     displayIngredients(ingredients) {
         const container = document.getElementById('recipeIngredients');
+        if (!container) return;
         container.innerHTML = '';
         ingredients.forEach(ingredient => {
             const li = document.createElement('li');
@@ -248,10 +264,10 @@ class RecipeGenerator {
             } else {
                 li.innerHTML = `
                     <div>
-                        <span class="ingredient-name">${ingredient.item || ingredient.name}</span>
-                        ${ingredient.notes ? `<div class="ingredient-notes">${ingredient.notes}</div>` : ''}
+                        <span>${ingredient.item || ingredient.name}</span>
+                        ${ingredient.notes ? `<small>${ingredient.notes}</small>` : ''}
                     </div>
-                    <span class="ingredient-amount">${ingredient.amount || ''} ${ingredient.unit || ''}</span>
+                    <div>${ingredient.amount || ''} ${ingredient.unit || ''}</div>
                 `;
             }
             container.appendChild(li);
@@ -260,31 +276,32 @@ class RecipeGenerator {
 
     displayEquipment(equipment) {
         const container = document.getElementById('recipeEquipment');
+        if (!container) return;
         container.innerHTML = '';
         equipment.forEach(item => {
-            const badge = document.createElement('span');
-            badge.className = 'equipment-badge';
-            badge.textContent = item;
-            container.appendChild(badge);
+            const span = document.createElement('span');
+            span.className = 'equipment-badge';
+            span.textContent = item;
+            container.appendChild(span);
         });
     }
 
     displayInstructions(instructions) {
         const container = document.getElementById('recipeInstructions');
+        if (!container) return;
         container.innerHTML = '';
-        instructions.forEach((instruction, index) => {
+        instructions.forEach((inst, index) => {
             const li = document.createElement('li');
-            if (typeof instruction === 'string') {
-                li.textContent = instruction;
+            if (typeof inst === 'string') {
+                li.textContent = inst;
             } else {
                 li.innerHTML = `
-                    <div class="instruction-text">${instruction.instruction}</div>
-                    ${(instruction.time || instruction.temperature) ? `
-                        <div class="instruction-meta">
-                            ${instruction.time ? `<span class="instruction-time"><i class="fas fa-clock"></i> ${instruction.time}</span>` : ''}
-                            ${instruction.temperature ? `<span class="instruction-temp"><i class="fas fa-thermometer-half"></i> ${instruction.temperature}</span>` : ''}
-                        </div>
-                    ` : ''}
+                    <div>${inst.instruction}</div>
+                    ${inst.time || inst.temperature ? `
+                        <small>
+                            ${inst.time ? `Time: ${inst.time}` : ''}
+                            ${inst.temperature ? ` Temp: ${inst.temperature}` : ''}
+                        </small>` : ''}
                 `;
             }
             container.appendChild(li);
@@ -293,6 +310,7 @@ class RecipeGenerator {
 
     displayTips(tips) {
         const container = document.getElementById('recipeTips');
+        if (!container) return;
         container.innerHTML = '';
         tips.forEach(tip => {
             const li = document.createElement('li');
@@ -303,86 +321,67 @@ class RecipeGenerator {
 
     displayNutrition(nutrition) {
         const container = document.getElementById('recipeNutrition');
+        if (!container) return;
         container.innerHTML = '';
-        const nutritionItems = [
-            { label: 'Calories', value: nutrition.calories, key: 'calories' },
-            { label: 'Protein', value: nutrition.protein, key: 'protein' },
-            { label: 'Carbs', value: nutrition.carbs, key: 'carbs' },
-            { label: 'Fat', value: nutrition.fat, key: 'fat' }
+        const items = [
+            { label: 'Calories', value: nutrition.calories },
+            { label: 'Protein', value: nutrition.protein },
+            { label: 'Carbs', value: nutrition.carbs },
+            { label: 'Fat', value: nutrition.fat }
         ];
-        nutritionItems.forEach(item => {
+        items.forEach(item => {
             if (item.value) {
                 const div = document.createElement('div');
-                div.className = 'nutrition-item';
-                div.innerHTML = `
-                    <div class="label">${item.label}</div>
-                    <div class="value">${item.value}</div>
-                `;
+                div.innerHTML = `${item.label}: ${item.value}`;
                 container.appendChild(div);
             }
         });
         if (container.innerHTML === '') {
-            container.innerHTML = '<p>Nutrition information not available</p>';
+            container.innerHTML = '<p>Nutrition info not available.</p>';
         }
     }
 
     displayVariations(variations) {
         const container = document.getElementById('recipeVariations');
+        if (!container) return;
         container.innerHTML = '';
-        variations.forEach(variation => {
-            const li = document.createElement('li');
-            li.textContent = variation;
-            container.appendChild(li);
-        });
         if (variations.length === 0) {
-            const li = document.createElement('li');
-            li.textContent = 'Try adding different spices or substituting ingredients to make it your own!';
-            container.appendChild(li);
+            container.innerHTML = '<li>Try experimenting with different ingredients!</li>';
+        } else {
+            variations.forEach(variation => {
+                const li = document.createElement('li');
+                li.textContent = variation;
+                container.appendChild(li);
+            });
         }
     }
 
     scrollToRecipe() {
         setTimeout(() => {
-            document.getElementById('recipeResult').scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
+            document.getElementById('recipeResult')?.scrollIntoView({ behavior: 'smooth' });
         }, 100);
     }
 
     showError(message) {
         const errorElement = document.getElementById('errorMessage');
         const errorText = document.getElementById('errorText');
+        if (!errorElement || !errorText) return;
         errorText.textContent = message;
         errorElement.classList.remove('hidden');
         setTimeout(() => {
             this.hideError();
         }, 8000);
-        errorElement.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center'
-        });
+        errorElement.scrollIntoView({ behavior: 'smooth' });
     }
 
     hideError() {
-        document.getElementById('errorMessage').classList.add('hidden');
-    }
-
-    getFormValue(id, defaultValue = '') {
-        const element = document.getElementById(id);
-        return element ? element.value : defaultValue;
-    }
-
-    setFormValue(id, value) {
-        const element = document.getElementById(id);
-        if (element) {
-            element.value = value;
-        }
+        const errorElement = document.getElementById('errorMessage');
+        if (!errorElement) return;
+        errorElement.classList.add('hidden');
     }
 }
 
-// Global functions for HTML onclick events
-
+// Global functions
 function resetForm() {
     document.querySelector('.form-container').style.display = 'block';
     document.getElementById('recipeResult').classList.add('hidden');
@@ -390,8 +389,7 @@ function resetForm() {
     recipeGenerator.ingredients = [];
     recipeGenerator.selectedEquipment = [];
     recipeGenerator.updateIngredientsDisplay();
-    const equipmentItems = document.querySelectorAll('.equipment-item');
-    equipmentItems.forEach(item => {
+    document.querySelectorAll('.equipment-item').forEach(item => {
         item.classList.remove('selected');
         const checkbox = item.querySelector('input[type="checkbox"]');
         if (checkbox) checkbox.checked = false;
@@ -411,85 +409,45 @@ function printRecipe() {
     window.print();
 }
 
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
-// Initialize on DOMContentLoaded
-document.addEventListener('DOMContentLoaded', function() {
+// Initialize app
+document.addEventListener('DOMContentLoaded', () => {
     window.recipeGenerator = new RecipeGenerator();
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('demo') === 'true') {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('demo') === 'true') {
         recipeGenerator.ingredients = ['chicken breast', 'rice', 'broccoli'];
         recipeGenerator.updateIngredientsDisplay();
     }
 });
 
-window.addEventListener('popstate', function(event) {
-    if (!document.getElementById('recipeResult').classList.contains('hidden')) {
-        resetForm();
-    }
-});
-
-document.addEventListener('keydown', function(event) {
-    if (event.key === 'Escape' && !document.getElementById('recipeResult').classList.contains('hidden')) {
+// Handle keyboard events
+window.addEventListener('keydown', event => {
+    if (event.key === 'Escape') {
         resetForm();
     }
     if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
         event.preventDefault();
-        const form = document.getElementById('recipeForm');
-        if (form.style.display !== 'none') {
-            recipeGenerator.generateRecipe();
-        }
+        recipeGenerator.generateRecipe();
     }
 });
 
-document.addEventListener('DOMContentLoaded', function() {
-    const inputs = document.querySelectorAll('input, select, textarea');
-    inputs.forEach(input => {
-        input.addEventListener('focus', function() {
-            this.parentElement.classList.add('focused');
-        });
-        input.addEventListener('blur', function() {
-            this.parentElement.classList.remove('focused');
-        });
-    });
-    const images = document.querySelectorAll('img');
-    images.forEach(img => {
-        img.addEventListener('load', function() {
-            this.style.opacity = '1';
-        });
-    });
-});
-
-window.addEventListener('online', function() {
+// Handle offline/online events
+window.addEventListener('online', () => {
     recipeGenerator.hideError();
-    console.log('Network connection restored');
+    console.log('Network restored.');
+});
+window.addEventListener('offline', () => {
+    recipeGenerator.showError('You are offline. Please check your connection.');
 });
 
-window.addEventListener('offline', function() {
-    recipeGenerator.showError('Network connection lost. Please check your internet connection.');
-});
-
+// Lazy load images if supported
 if ('IntersectionObserver' in window) {
-    const lazyElements = document.querySelectorAll('.lazy-load');
-    const lazyObserver = new IntersectionObserver((entries) => {
+    const observer = new IntersectionObserver((entries, obs) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 entry.target.classList.add('loaded');
-                lazyObserver.unobserve(entry.target);
+                obs.unobserve(entry.target);
             }
         });
     });
-    lazyElements.forEach(element => {
-        lazyObserver.observe(element);
-    });
+    document.querySelectorAll('.lazy-load').forEach(img => observer.observe(img));
 }
