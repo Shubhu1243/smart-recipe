@@ -2,7 +2,7 @@
 
 class RecipeGenerator {
     constructor() {
-        this.apiBaseUrl = 'https://smart-recipe-backend-nbo609lhq-shubhu1243s-projects.vercel.app'; // Set backend URL
+        this.apiBaseUrl = 'https://smart-recipe-backend.vercel.app'; // Set backend URL
         this.ingredients = [];
         this.selectedEquipment = [];
         this.init();
